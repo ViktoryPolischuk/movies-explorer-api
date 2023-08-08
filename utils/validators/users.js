@@ -15,14 +15,9 @@ module.exports.validateSignUp = celebrate({
   }),
 });
 
-module.exports.validateUserId = celebrate({
-  params: Joi.object().keys({
-    userId: Joi.string().required().hex().length(24),
-  }),
-});
-
 module.exports.validateUser = celebrate({
   body: Joi.object().keys({
+    email: Joi.string().required().email(),
     name: Joi.string().min(2).max(30),
   }),
 });

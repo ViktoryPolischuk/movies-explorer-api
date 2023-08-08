@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post('/signin', validateSignIn, login);
 router.post('/signup', validateSignUp, createUser);
-router.post('/signout', logout);
+router.post('/signout', auth, logout);
 router.use('/users', auth, usersRouter);
 router.use('/movies', auth, moviesRouter);
 router.use((req, res, next) => {

@@ -7,11 +7,10 @@ const ConflictError = require('../utils/errors/ConflictError');
 const { JWT_SECRET } = require('../utils/constants');
 
 module.exports.getCurrentUser = (req, res, next) => {
-  const { _id } = req.user;
-  User.findById({ _id })
+  User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        throw new NotFoundError('Пользователь по указанному _id не найден');
+        throw new NotFoundError('Пользователь с указанным _id не найден');
       }
       res.send(user);
     })
@@ -25,8 +24,8 @@ module.exports.getCurrentUser = (req, res, next) => {
 };
 
 module.exports.updateUser = (req, res, next) => {
-  const { name } = req.body;
-  User.findByIdAndUpdate(req.user._id, { name }, { new: true, runValidators: true })
+  const { name, email } = req.body;
+  User.findByIdAndUpdate(req.user._id, { name, email }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Пользователь с указанным _id не найден');
@@ -34,7 +33,9 @@ module.exports.updateUser = (req, res, next) => {
       res.send(user);
     })
     .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
+      if (err.code === 11000) {
+        next(new ConflictError('Пользователь с указанным email уже зарегистрирован'));
+      } else if (err.name === 'CastError' || err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при обновлении профиля'));
         return;
       }
@@ -43,19 +44,13 @@ module.exports.updateUser = (req, res, next) => {
 };
 
 module.exports.createUser = (req, res, next) => {
-  const {
-    name, about, avatar, email, password,
-  } = req.body;
+  const { name, email, password } = req.body;
   bcrypt.hash(password, 10)
-    .then((hash) => User.create({
-      name, about, avatar, email, password: hash,
-    }))
-    .then(({ _id }) => res.send({
-      _id, name, about, avatar, email,
-    }))
+    .then((hash) => User.create({ name, email, password: hash }))
+    .then(({ _id }) => res.send({ _id, name, email }))
     .catch((err) => {
       if (err.code === 11000) {
-        next(new ConflictError('Пользователь с данным email уже зарегистрирован'));
+        next(new ConflictError('Пользователь с указанным email уже зарегистрирован'));
       } else if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
         return;
@@ -66,7 +61,6 @@ module.exports.createUser = (req, res, next) => {
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
-
   return User.findUserByCredentials(email, password)
     .then(({ _id }) => {
       const token = jwt.sign(

@@ -4,9 +4,15 @@ const BadRequestError = require('../utils/errors/BadRequestError');
 const ForbiddenError = require('../utils/errors/ForbiddenError');
 
 module.exports.getMovies = (req, res, next) => {
-  Movie.find({})
+  Movie.find({ owner: req.user._id })
     .then((movies) => res.send(movies))
-    .catch((err) => next(err));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Передан некорректный _id пользователя'));
+        return;
+      }
+      next(err);
+    });
 };
 
 module.exports.createMovie = (req, res, next) => {
