@@ -1,7 +1,7 @@
 const ALLOWED_ORIGINS = [
   'http://localhost:3001',
-  'http://mrspolischuk.students.nomoredomains.xyz',
-  'https://mrspolischuk.students.nomoredomains.xyz',
+  'http://mrspolischuk.nomoreparties.co',
+  'https://mrspolischuk.nomoreparties.co',
 ];
 
 const ALLOWED_METHODS = 'GET,HEAD,PUT,PATCH,POST,DELETE';
